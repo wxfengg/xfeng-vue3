@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script type="module">
+      import { ref, effect } from '../dist/reactivity.esm.js'
+
+      const count = ref(0)
+
+      effect(() => {
+        console.log('🚀 ~ effect1:', count.value)
+      })
+
+      effect(() => {
+        console.log('🚀 ~ effect2:', count.value)
+      })
+
+      setTimeout(() => {
+        count.value = 1
+      }, 1000)
+    </script>
+  </body>
+</html>
