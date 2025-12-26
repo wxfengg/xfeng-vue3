@@ -11,13 +11,20 @@
 
       const count = ref(0)
 
-      effect(() => {
-        console.log('🚀 ~ effect1:', count.value)
-      })
-
-      effect(() => {
-        console.log('🚀 ~ effect2:', count.value)
-      })
+      const e = effect(
+        () => {
+          console.log('🚀 ~ effect:', count.value)
+          return 'fn返回值'
+        },
+        {
+          scheduler() {
+            console.log('scheduler触发的更新', this)
+            const res = e()
+            console.log('🚀 ~ res:', res)
+          },
+        },
+      )
+      console.dir(e)
 
       setTimeout(() => {
         count.value = 1
