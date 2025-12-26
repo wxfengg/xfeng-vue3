@@ -1,4 +1,5 @@
 import { activeSub } from './effect'
+import { link, propagate } from './system'
 
 interface Link {
   /** 链表当前节点的 effect */
@@ -29,26 +30,7 @@ class RefImpl {
 
   get value() {
     // 访问 ref 的时候收集依赖
-    if (activeSub) {
-      // 1.如果有sub 根据sub构建一个link节点
-      const newLink: Link = {
-        sub: activeSub,
-        next: undefined,
-        prev: undefined,
-      }
-
-      // 2.判断是否有尾节点
-      if (this.subsTail) {
-        // 如果有则在尾节点后面加入新点
-        this.subsTail.next = newLink
-        newLink.prev = this.subs
-        this.subsTail = newLink
-      } else {
-        // 如果没有说明链表是空的，直接加入即可
-        this.subs = newLink
-        this.subsTail = newLink
-      }
-    }
+    if (activeSub) trackRef(this)
 
     return this._value
   }
@@ -57,11 +39,7 @@ class RefImpl {
     this._value = value
 
     // 如果 ref 更新，重新触发 effect 执行函数
-    let currentLink = this.subs
-    while (currentLink) {
-      currentLink.sub?.()
-      currentLink = currentLink.next
-    }
+    triggerRef(this)
   }
 }
 
@@ -72,4 +50,20 @@ export function ref(value) {
 /** 判断是否为Ref */
 export function isRef(value) {
   return !!(value && value[ReactivityFlags.IS_REF])
+}
+
+/**
+ * 收集依赖，建立 ref 和 effect 之间的链表关系
+ * @param dep
+ */
+export function trackRef(dep) {
+  if (activeSub) link(dep, activeSub)
+}
+
+/**
+ * 触发 ref 关联的 effect 重新执行
+ * @param dep
+ */
+export function triggerRef(dep) {
+  if (dep.subs) propagate(dep.subs)
 }
