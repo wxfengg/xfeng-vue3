@@ -1,12 +1,26 @@
-export let activeSub
+import type { Link } from './system'
+
+/** 当前的订阅者 */
+export let activeSub: ReactiveEffect
 
 export class ReactiveEffect {
+  /** 依赖项链表头节点 */
+  deps: Link | undefined
+  /** 依赖项链表尾节点 */
+  depsTail: Link | undefined
+
   constructor(public fn) {}
 
   run() {
     // 当 effect 里面嵌套 effect 的时候，需要保存当前的 effect
     const prevSub = activeSub
     activeSub = this
+    /**
+     * 解决 sub 复用问题
+     * 每次 dep 更新通知 sub 执行的时候，先把 sub 的 depsTail 设置为 undefined
+     * 这样收集依赖的时候可以通过判断 sub 的 depsTail 是否等于 undefined 来决定复用
+     */
+    this.depsTail = undefined
     try {
       return this.fn()
     } finally {
