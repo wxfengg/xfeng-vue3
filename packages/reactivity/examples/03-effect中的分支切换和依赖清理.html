@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>03-effect中的分支切换和依赖清理</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <button id="flagBtn">update flag</button>
+    <button id="nameBtn">update name</button>
+    <button id="ageBtn">update age</button>
+
+    <script type="module">
+      import { ref, effect } from '../dist/reactivity.esm.js'
+
+      const flag = ref(true)
+      const name = ref('XFeng')
+      const age = ref(18)
+      // let count = 0
+
+      effect(() => {
+        // console.count('effect执行了')
+        // if (count > 0) return
+        // count++
+        if (flag.value) {
+          app.innerHTML = name.value
+        } else {
+          app.innerHTML = age.value
+        }
+      })
+
+      flagBtn.onclick = () => {
+        flag.value = !flag.value
+      }
+
+      nameBtn.onclick = () => {
+        name.value = name.value + Math.random()
+      }
+
+      ageBtn.onclick = () => {
+        age.value++
+      }
+    </script>
+  </body>
+</html>

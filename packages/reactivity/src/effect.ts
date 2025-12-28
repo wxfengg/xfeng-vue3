@@ -1,4 +1,4 @@
-import type { Link } from './system'
+import { endTrack, startTrack, type Link } from './system'
 
 /** 当前的订阅者 */
 export let activeSub: ReactiveEffect
@@ -12,7 +12,7 @@ export class ReactiveEffect {
   constructor(public fn) {}
 
   run() {
-    // 当 effect 里面嵌套 effect 的时候，需要保存当前的 effect
+    // 当 effect 里面嵌套 effect 的时候，需要保存当前的 effect（解决effect嵌套effect问题）
     const prevSub = activeSub
     activeSub = this
     /**
@@ -20,11 +20,15 @@ export class ReactiveEffect {
      * 每次 dep 更新通知 sub 执行的时候，先把 sub 的 depsTail 设置为 undefined
      * 这样收集依赖的时候可以通过判断 sub 的 depsTail 是否等于 undefined 来决定复用
      */
-    this.depsTail = undefined
+    startTrack(this)
     try {
       return this.fn()
     } finally {
-      // 执行完成当前的 effect 将 activeSub 设置为上一次保存的 effect
+      // 结束收集依赖，清理多余的依赖项
+      // 约定：新增节点的时候会把 nextDep 指向没有被复用的节点，每次 effect 执行完毕后，depsTail 之后的 nextDep 都是多余的，需要清理掉
+      endTrack(this)
+
+      // 执行完成当前的 effect 将 activeSub 设置为上一次保存的 effect（解决effect嵌套effect问题）
       activeSub = prevSub
     }
   }
