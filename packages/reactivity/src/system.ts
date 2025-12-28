@@ -12,6 +12,8 @@ export interface Sub {
   deps: Link | undefined
   /** 依赖项链表尾节点 */
   depsTail: Link | undefined
+  /** 是否正在收集依赖 */
+  tracking: boolean
 }
 
 export interface Link {
@@ -115,7 +117,8 @@ export function propagate(subs: Link | undefined) {
   let currentLink = subs
   let queuedEffect = []
   while (currentLink) {
-    queuedEffect.push(currentLink.sub)
+    // 如果正在追踪依赖不触发更新，避免循环触发
+    if (!currentLink.sub.tracking) queuedEffect.push(currentLink.sub)
     currentLink = currentLink.nextSub
   }
 
@@ -127,6 +130,7 @@ export function propagate(subs: Link | undefined) {
  * @param sub 订阅者
  */
 export function startTrack(sub: Sub) {
+  sub.tracking = true
   sub.depsTail = undefined
 }
 
@@ -136,6 +140,8 @@ export function startTrack(sub: Sub) {
  * @returns
  */
 export function endTrack(sub: Sub) {
+  sub.tracking = false
+
   // 1. 拿到当前 sub 的 depsTail
   const depsTail = sub.depsTail
 

@@ -8,6 +8,8 @@ export class ReactiveEffect {
   deps: Link | undefined
   /** 依赖项链表尾节点 */
   depsTail: Link | undefined
+  /** 是否正在收集依赖 */
+  tracking = false
 
   constructor(public fn) {}
 
