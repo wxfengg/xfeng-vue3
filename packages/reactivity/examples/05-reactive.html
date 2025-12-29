@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>05-reactive</title>
+  </head>
+  <body>
+    <script type="module">
+      import { ref, reactive, effect } from '../dist/reactivity.esm.js'
+
+      const count = ref(0)
+      const obj = {
+        a: 0,
+        b: 0,
+        count,
+        c: {
+          d: 0,
+        },
+      }
+
+      const state = reactive(obj)
+      // const state2 = reactive(state)
+      // console.log(state === state2) // true
+
+      effect(() => {
+        // console.log('🚀 ~ effect:', state.a)
+        // console.log('🚀 ~ effect:', state.count)
+        console.log('🚀 ~ effect:', count.value)
+        // console.log('🚀 ~ effect:', state.c.d)
+      })
+
+      setTimeout(() => {
+        // state.a = 0
+        // state.count = 1
+        count.value = ref(1)
+        console.log('🚀 ~ count:', count.value.value)
+        // state.c.d = 1
+      }, 1000)
+    </script>
+  </body>
+</html>

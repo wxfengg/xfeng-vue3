@@ -1,5 +1,5 @@
 /** 依赖项链表节点 */
-export interface Dep {
+export interface Dependency {
   /** 订阅者链表头节点 */
   subs: Link | undefined
   /** 订阅者链表尾节点 */
@@ -24,7 +24,7 @@ export interface Link {
   /** 上一个订阅者节点 */
   prevSub: Link | undefined
   /** 依赖项链表节点 */
-  dep: Dep
+  dep: Dependency
   /** 下一个依赖项节点 */
   nextDep: Link | undefined
 }
@@ -37,7 +37,7 @@ let linkPool: Link | undefined = undefined
  * @param dep 依赖项
  * @param sub 订阅者
  */
-export function link(dep: Dep, sub: Sub) {
+export function link(dep: Dependency, sub: Sub) {
   // 收集依赖
   // - 如果 dep 和 sub 之间有关联关系走 -> 复用节点流程
   // 否则走 -> 新增节点流程
