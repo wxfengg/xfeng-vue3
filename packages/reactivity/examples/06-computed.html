@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>06-computed</title>
+  </head>
+  <body>
+    <script type="module">
+      import { ref, effect, computed } from '../dist/reactivity.esm.js'
+
+      const count = ref(0)
+
+      const c = computed(() => {
+        // console.count('🚀 ~ computed执行次数')
+        return count.value + 1
+      })
+
+      const d = computed(() => {
+        return c.value * 2
+      })
+
+      effect(() => {
+        console.log('🚀 ~ effect:', d.value)
+      })
+
+      setTimeout(() => {
+        count.value = 1
+        // c.value = 2
+      }, 1000)
+
+      // console.log('🚀 ~ effect:', c.value)
+      // console.log('🚀 ~ effect:', c.value)
+      // console.log('🚀 ~ effect:', c.value)
+      // console.log('🚀 ~ effect:', c.value)
+
+      // count.value = 1
+      // console.log('🚀 ~ effect:', c.value)
+    </script>
+  </body>
+</html>

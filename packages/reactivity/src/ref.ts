@@ -3,18 +3,18 @@ import { activeSub } from './effect'
 import { link, propagate, type Dependency, type Link } from './system'
 import { reactive } from './reactive'
 
-enum ReactivityFlags {
+export enum ReactivityFlags {
   IS_REF = '__v_isRef',
 }
 
-class RefImpl {
-  // ref的值
-  _value: unknown;
-  // 是否为Ref的标记
+export class RefImpl implements Dependency {
+  // 标记为 Ref
   [ReactivityFlags.IS_REF] = true
-  // 订阅者链表的头节点
+  /** ref的值 */
+  _value: unknown
+  /** 订阅者链表的头节点 */
   subs: Link | undefined
-  // 订阅者链表的尾节点
+  /** 订阅者链表的尾节点 */
   subsTail: Link | undefined
 
   constructor(value: any) {

@@ -1,3 +1,5 @@
+import { ComputedRefImpl } from './computed'
+
 /** 依赖项链表节点 */
 export interface Dependency {
   /** 订阅者链表头节点 */
@@ -14,17 +16,19 @@ export interface Sub {
   depsTail: Link | undefined
   /** 是否正在收集依赖 */
   tracking: boolean
+  /** 是否脏值 */
+  dirty: boolean
 }
 
 export interface Link {
   /** 订阅者链表节点 */
-  sub: Sub
+  sub: Sub | undefined
   /** 下一个订阅者节点 */
   nextSub: Link | undefined
   /** 上一个订阅者节点 */
   prevSub: Link | undefined
   /** 依赖项链表节点 */
-  dep: Dependency
+  dep: Dependency | undefined
   /** 下一个依赖项节点 */
   nextDep: Link | undefined
 }
@@ -60,6 +64,13 @@ export function link(dep: Dependency, sub: Sub) {
     sub.depsTail = nextDep
     return
   }
+
+  // 新增节点的时候判断链表中是否有相同的 sub ，有的话不新增（源码写法，时间换空间）
+  // let currentSub = dep.subs
+  // while (currentSub) {
+  //   if (currentSub.sub === sub) return
+  //   currentSub = currentSub.nextSub
+  // }
 
   // 新增节点流程
   // 1.构建一个link节点
@@ -110,6 +121,22 @@ export function link(dep: Dependency, sub: Sub) {
 }
 
 /**
+ * 处理计算属性的更新逻辑
+ * @param dep 计算属性此时作为依赖项的身份
+ */
+function processComputedUpdate(dep: ComputedRefImpl) {
+  // 触发计算属性的更新
+  // - 要重新访问计算属性的值才会重新计算.
+  // - 计算属性的值发生变化后，继续触发它的订阅者更新
+
+  // 1. 调用计算属性的 update 方法，重新计算值并收集依赖，update 内部会返回一个boolean表示值是否变化
+  if (dep.subs && dep.update()) {
+    // 2. 触发计算属性的订阅者更新
+    propagate(dep.subs)
+  }
+}
+
+/**
  * 触发订阅者更新
  * @param subs 订阅者头节点
  */
@@ -117,8 +144,19 @@ export function propagate(subs: Link | undefined) {
   let currentLink = subs
   let queuedEffect = []
   while (currentLink) {
+    const sub = currentLink.sub
     // 如果正在追踪依赖不触发更新，避免循环触发
-    if (!currentLink.sub.tracking) queuedEffect.push(currentLink.sub)
+    if (!sub.tracking && !sub.dirty) {
+      // 更新的时候标记为脏值，说明 sub 已经执行，下次不需要再执行
+      // 对应 link 方法里面的判断是否有相同的 sub 逻辑（时间换空间写法）
+      sub.dirty = true
+      if ('update' in sub) {
+        // 如果有 update 方法，说明是计算属性
+        processComputedUpdate(sub as ComputedRefImpl)
+      } else {
+        queuedEffect.push(sub)
+      }
+    }
     currentLink = currentLink.nextSub
   }
 
@@ -141,6 +179,7 @@ export function startTrack(sub: Sub) {
  */
 export function endTrack(sub: Sub) {
   sub.tracking = false
+  sub.dirty = false
 
   // 1. 拿到当前 sub 的 depsTail
   const depsTail = sub.depsTail

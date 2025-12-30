@@ -16,3 +16,12 @@ export function isObject(value: unknown): value is Record<string, unknown> {
 export function hasChanged(value: unknown, oldValue: unknown): boolean {
   return !Object.is(value, oldValue)
 }
+
+/**
+ * 判断是否为函数
+ * @param value 输入的值
+ * @returns
+ */
+export function isFunction(value: unknown): value is Function {
+  return typeof value === 'function'
+}

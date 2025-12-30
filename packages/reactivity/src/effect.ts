@@ -1,22 +1,33 @@
-import { endTrack, startTrack, type Link } from './system'
+import { ComputedRefImpl } from './computed'
+import { endTrack, startTrack, Sub, type Link } from './system'
+
+export type ActiveSub = ReactiveEffect | ComputedRefImpl | undefined
 
 /** 当前的订阅者 */
-export let activeSub: ReactiveEffect
+export let activeSub: ActiveSub
+export function setActiveSub(sub: ActiveSub) {
+  activeSub = sub
+}
 
-export class ReactiveEffect {
+export class ReactiveEffect implements Sub {
   /** 依赖项链表头节点 */
   deps: Link | undefined
   /** 依赖项链表尾节点 */
   depsTail: Link | undefined
   /** 是否正在收集依赖 */
   tracking = false
+  /** 是否脏值
+   * 当 effect 依赖的响应式数据发生变化时，会将 dirty 设置为 true
+   * 下次执行 effect 的 run 方法时，会重新执行函数体
+   */
+  dirty: boolean = false
 
   constructor(public fn) {}
 
   run() {
     // 当 effect 里面嵌套 effect 的时候，需要保存当前的 effect（解决effect嵌套effect问题）
     const prevSub = activeSub
-    activeSub = this
+    setActiveSub(this)
     /**
      * 解决 sub 复用问题
      * 每次 dep 更新通知 sub 执行的时候，先把 sub 的 depsTail 设置为 undefined
@@ -31,7 +42,7 @@ export class ReactiveEffect {
       endTrack(this)
 
       // 执行完成当前的 effect 将 activeSub 设置为上一次保存的 effect（解决effect嵌套effect问题）
-      activeSub = prevSub
+      setActiveSub(prevSub)
     }
   }
 
