@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>08-数组的响应式</title>
+  </head>
+  <body>
+    <script type="module">
+      import { reactive, effect } from '../dist/reactivity.esm.js'
+
+      const state = reactive(['a', 'b', 'c'])
+
+      effect(() => {
+        // console.log('🚀 ~ state:', state[2])
+        console.log('🚀 ~ effect:', state.length)
+      })
+
+      setTimeout(() => {
+        // state[2] = 'changed c'
+        // state.length = 1
+        // state.pop()
+        // state.shift()
+        state.push('d')
+        // state.unshift('0')
+      }, 500)
+    </script>
+  </body>
+</html>

@@ -3,8 +3,9 @@ import { track, trigger } from './dep'
 import { isRef } from './ref'
 import { reactive } from './reactive'
 
+export type ReactiveTarget = Record<string | symbol, unknown> | Array<unknown>
 /** 代理对象的 Handlers */
-export const mutableHandlers: ProxyHandler<Record<string | symbol, unknown>> = {
+export const mutableHandlers: ProxyHandler<ReactiveTarget> = {
   get(target, key, receiver) {
     // 访问属性收集依赖，建立 target.key 和 sub 之间的链表关系
     track(target, key)
@@ -22,19 +23,31 @@ export const mutableHandlers: ProxyHandler<Record<string | symbol, unknown>> = {
   set(target, key, newValue, receiver) {
     // 如果新值和旧值相等，不触发更新
     const oldValue: any = target[key]
-    const result = Reflect.set(target, key, newValue, receiver)
+
+    // 处理 target 为数组并且是 length 隐式更新的情况
+    const targetIsArray = Array.isArray(target)
+    const oldLength = targetIsArray ? target.length : 0
 
     // 如果传入的值是 ref 且 newValue 不是 ref，则把 newValue 赋值给 ref 的 value
     // 如果传入的值是 ref 且 newValue 也是 ref, 则不用管了
     if (isRef(oldValue) && !isRef(newValue)) {
       // 这里会触发 ref 的 set，从而触发 ref 的依赖更新，所以后续不需要再触发 target.key 的更新
       oldValue.value = newValue
-      return result
+      return true
     }
+
+    const result = Reflect.set(target, key, newValue, receiver)
 
     if (hasChanged(newValue, oldValue)) {
       // 属性修改后 并且 如果新值和旧值不相等 通知更新
       trigger(target, key)
+    }
+
+    const newLength = targetIsArray ? target.length : 0
+    // length 隐式更新的情况
+    if (targetIsArray && newLength !== oldLength && key !== 'length') {
+      // key 不是 length，说明是通过隐式更新数组内容，触发 length 更新
+      trigger(target, 'length')
     }
 
     return result

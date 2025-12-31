@@ -1,3 +1,4 @@
+import { ReactiveTarget } from './baseHandlers'
 import { activeSub } from './effect'
 import { link, Link, propagate } from './system'
 
@@ -16,17 +17,22 @@ class Dep {
  * 示例：
  * ```ts
  * const state = reactive({ a: 1, b: 2 })
- * targetMap = WeakMap { obj state => Map { 'a' => Dep depA, 'b' => Dep depB } }
+ * targetMap = WeakMap {
+ *  obj state => Map depsMap {
+ *      'a' => Dep depA,
+ *      'b' => Dep depB
+ *    }
+ *  }
  * ```
  */
-const targetMap: WeakMap<WeakKey, Map<string | symbol, Dep>> = new WeakMap()
+const targetMap: WeakMap<ReactiveTarget, Map<any, Dep>> = new WeakMap()
 
 /**
  * 收集依赖
  * @param target 收集依赖的对象
  * @param key 收集依赖的对象的key
  */
-export function track(target: Record<string, unknown>, key: string | symbol) {
+export function track(target: ReactiveTarget, key) {
   if (!activeSub) return
 
   // 找 depsMap 也就是 targetMap 里面没有关联到 target 的 Map
@@ -54,16 +60,32 @@ export function track(target: Record<string, unknown>, key: string | symbol) {
  * @param target 触发更新的对象
  * @param key 触发更新的对象的key
  */
-export function trigger(target: Record<string, unknown>, key: string | symbol) {
+export function trigger(target: ReactiveTarget, key) {
   let depsMap = targetMap.get(target)
   // 触发更新的时候发现没有 depsMap 说明 target 没有被 sub 访问过
   if (!depsMap) return
 
-  let dep = depsMap.get(key)
-  // 触发更新的时候发现没有 dep 说明 target.key 没有被 sub 访问过
-  if (!dep) return
+  const targetIsArray = Array.isArray(target)
+  if (targetIsArray && key === 'length') {
+    // 1.如果修改的是数组的 length 属性，并且修改的是 length 属性
+    // 那么需要触发更新所有索引大于等于新 length 的元素对应的依赖
+    const length = target.length
+    depsMap.forEach((dep, depKey) => {
+      // depKey 可能是 数组索引 也可能是 'length'
+      if (depKey >= length || depKey === 'length') {
+        // 如果找到 dep 的 subs 再通知它们重新执行
+        if (!dep.subs) return
+        propagate(dep.subs)
+      }
+    })
+  } else {
+    // 2.不是修改的数组的 length 属性，或者根本就不是数组
+    let dep = depsMap.get(key)
+    // 触发更新的时候发现没有 dep 说明 target.key 没有被 sub 访问过
+    if (!dep) return
 
-  // 如果找到 dep 的 subs 再通知它们重新执行
-  if (!dep.subs) return
-  propagate(dep.subs)
+    // 如果找到 dep 的 subs 再通知它们重新执行
+    if (!dep.subs) return
+    propagate(dep.subs)
+  }
 }
