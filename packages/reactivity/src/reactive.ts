@@ -38,6 +38,6 @@ function createReactiveObject(target) {
 }
 
 /** 判断是否为Reactive */
-function isReactive(value: unknown): boolean {
+export function isReactive(value: unknown): boolean {
   return reactiveSet.has(value as object)
 }

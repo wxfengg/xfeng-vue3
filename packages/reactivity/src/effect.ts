@@ -21,10 +21,20 @@ export class ReactiveEffect implements Sub {
    * 下次执行 effect 的 run 方法时，会重新执行函数体
    */
   dirty: boolean = false
+  /** 表示这个 effect 是否激活 */
+  active: boolean = true
 
   constructor(public fn) {}
 
+  /**
+   * 最终执行 effect 里 fn 的方法
+   * @returns 返回 effect 里面 fn 的返回值
+   */
   run() {
+    // 如果 effect 已经被停止了，直接执行 fn，不进行依赖收集
+    // 防止 stop 之后再次执行 effect 函数里面返回的 runner 函数导致重新收集依赖
+    if (!this.active) return this.fn()
+
     // 当 effect 里面嵌套 effect 的时候，需要保存当前的 effect（解决effect嵌套effect问题）
     const prevSub = activeSub
     setActiveSub(this)
@@ -60,6 +70,16 @@ export class ReactiveEffect implements Sub {
    */
   scheduler() {
     this.run()
+  }
+
+  /** 停止收集依赖和更新 */
+  stop() {
+    if (this.active) {
+      // 清理依赖,解除 effect 和 依赖项 之间的关联,所以后续依赖项更新不会再触发该 effect 执行
+      startTrack(this)
+      endTrack(this)
+      this.active = false
+    }
   }
 }
 

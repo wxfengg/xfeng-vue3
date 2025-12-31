@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>07-watch</title>
+  </head>
+  <body>
+    <script type="module">
+      import { reactive, ref, watch } from '../dist/reactivity.esm.js'
+
+      const count = ref(0)
+      const state = ref({
+        a: {
+          b: 0,
+          c: {
+            d: 0,
+          },
+        },
+      })
+
+      const reactiveState = reactive({
+        a: {
+          b: 0,
+          c: {
+            d: 0,
+          },
+        },
+      })
+
+      const stop = watch(
+        // count,
+        // state,
+        reactiveState,
+        (newVal, oldVal) => {
+          console.log('🚀 ~ watch:', newVal, oldVal)
+        },
+        { deep: 2 },
+      )
+
+      setTimeout(() => {
+        reactiveState.a.c.d = 1
+        // state.value.a.b = 1
+        // count.value = 1
+        // setTimeout(() => {
+        //   // stop()
+        //   count.value = 2
+        // }, 1000)
+      }, 500)
+    </script>
+  </body>
+</html>

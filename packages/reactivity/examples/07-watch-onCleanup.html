@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>07-watch-onCleanup</title>
+  </head>
+  <body>
+    <div
+      id="first"
+      style="width: 100px; height: 50px; background-color: pink"
+    ></div>
+    <div
+      id="second"
+      style="width: 100px; height: 50px; background-color: red"
+    ></div>
+    <button id="btn">切换</button>
+    <script type="module">
+      import { ref, watch } from '../dist/reactivity.esm.js'
+
+      const flag = ref(true)
+
+      watch(
+        () => flag.value,
+        (newVal, oldVal, onCleanup) => {
+          const dom = newVal ? first : second
+          function handler() {
+            console.log('点击了', newVal ? '第一个' : '第二个')
+          }
+          dom.addEventListener('click', handler)
+
+          // 注册一个清理函数
+          onCleanup(() => {
+            console.log('执行清理工作')
+            dom.removeEventListener('click', handler)
+          })
+        },
+        { immediate: true },
+      )
+
+      btn.onclick = () => {
+        flag.value = !flag.value
+      }
+    </script>
+  </body>
+</html>
