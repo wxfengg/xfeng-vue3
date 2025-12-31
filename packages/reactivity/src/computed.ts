@@ -1,11 +1,11 @@
 import { hasChanged, isFunction } from '@vue/shared'
-import { ReactivityFlags } from './ref'
+import { ReactiveFlags } from './ref'
 import { Dependency, endTrack, link, Link, startTrack, Sub } from './system'
 import { activeSub, setActiveSub } from './effect'
 
 export class ComputedRefImpl implements Dependency, Sub {
   // computed 也是一个 ref，通过 isRef 也返回 true. 标记为 Ref
-  [ReactivityFlags.IS_REF] = true
+  [ReactiveFlags.IS_REF] = true
   // 保存 getter 的值
   _value: unknown
 

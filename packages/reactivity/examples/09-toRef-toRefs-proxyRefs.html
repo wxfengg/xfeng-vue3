@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>09-toRef-toRefs-proxyRefs</title>
+  </head>
+  <body>
+    <script type="module">
+      import {
+        ref,
+        effect,
+        toRef,
+        reactive,
+        toRefs,
+        proxyRefs,
+      } from '../dist/reactivity.esm.js'
+
+      const state = reactive({
+        name: 'XFeng',
+        age: 18,
+        count: ref(0),
+      })
+
+      const { name } = state
+      const nameRef = toRef(state, 'name')
+
+      console.log('🚀 ~ name:', name)
+      console.log('🚀 ~ nameRef:', nameRef.value)
+
+      state.name = 'NewName'
+      console.log('🚀 ~ name change:', name)
+      console.log('🚀 ~ nameRef change:', nameRef.value)
+
+      const { name: refsName, age } = toRefs(state)
+      console.log('🚀 ~ age:', age.value)
+      console.log('🚀 ~ refsName:', refsName.value)
+      age.value++
+      state.name = 'refsName change'
+      console.log('🚀 ~ age change:', age.value)
+      console.log('🚀 ~ refsName change:', refsName.value)
+
+      const obj = {
+        count: ref(0),
+      }
+      const proxy = proxyRefs(obj)
+      const { count } = obj
+      const { count: proxyCount } = proxy
+      const { count: toRefsProxyCount } = toRefs(proxy)
+
+      // 不用 proxyRefs：需要 .value
+      console.log('🚀 ~ obj.count', obj.count.value) // 0
+      // 用 proxyRefs：自动解包，不需要 .value
+      console.log('🚀 ~ proxy.count', proxy.count) // 0
+      proxy.count = 10 // 自动设置到 ref.value
+      console.log('🚀 ~ count.value change:', obj.count.value)
+      console.log('🚀 ~ proxy.count change:', proxy.count)
+      console.log('🚀 ~ obj.count:', count.value)
+      console.log('🚀 ~ proxy.count:', proxyCount)
+      console.log('🚀 ~ toRefsProxyCount:', toRefsProxyCount.value)
+    </script>
+  </body>
+</html>

@@ -3,13 +3,13 @@ import { activeSub } from './effect'
 import { link, propagate, type Dependency, type Link } from './system'
 import { reactive } from './reactive'
 
-export enum ReactivityFlags {
+export enum ReactiveFlags {
   IS_REF = '__v_isRef',
 }
 
 export class RefImpl implements Dependency {
   // 标记为 Ref
-  [ReactivityFlags.IS_REF] = true
+  [ReactiveFlags.IS_REF] = true
   /** ref的值 */
   _value: unknown
   /** 订阅者链表的头节点 */
@@ -46,7 +46,14 @@ export function ref(value) {
 
 /** 判断是否为Ref */
 export function isRef(value) {
-  return !!(value && value[ReactivityFlags.IS_REF])
+  return !!(value && value[ReactiveFlags.IS_REF])
+}
+
+/**
+ * 如果参数是 ref，则返回内部值，否则返回参数本身
+ */
+export function unref(value) {
+  return isRef(value) ? value.value : value
 }
 
 /**
@@ -63,4 +70,56 @@ export function trackRef(dep: Dependency) {
  */
 export function triggerRef(dep: Dependency) {
   if (dep.subs) propagate(dep.subs)
+}
+
+class ObjectRefImpl {
+  [ReactiveFlags.IS_REF] = true
+
+  constructor(
+    public _object,
+    public _key,
+  ) {}
+
+  get value() {
+    return this._object[this._key]
+  }
+
+  set value(newValue) {
+    this._object[this._key] = newValue
+  }
+}
+
+export function toRef(object, key) {
+  return new ObjectRefImpl(object, key)
+}
+
+export function toRefs(object) {
+  const res = {}
+  for (const key in object) {
+    res[key] = toRef(object, key)
+  }
+
+  return res
+}
+
+/** 创建一个代理对象，自动解包 ref
+ * @param target 目标对象
+ */
+export function proxyRefs(target) {
+  return new Proxy(target, {
+    get(...args) {
+      let res = Reflect.get(...args)
+      return unref(res)
+    },
+    set(target, key, newValue, receiver) {
+      const oldValue = target[key]
+
+      if (isRef(oldValue) && !isRef(newValue)) {
+        oldValue.value = newValue
+        return true
+      }
+
+      return Reflect.set(target, key, newValue, receiver)
+    },
+  })
 }
