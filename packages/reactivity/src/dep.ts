@@ -28,7 +28,7 @@ class Dep {
 const targetMap: WeakMap<ReactiveTarget, Map<any, Dep>> = new WeakMap()
 
 /**
- * 收集依赖
+ * reactive 收集依赖
  * @param target 收集依赖的对象
  * @param key 收集依赖的对象的key
  */
@@ -56,7 +56,7 @@ export function track(target: ReactiveTarget, key) {
 }
 
 /**
- * 触发更新
+ * reactive 触发更新
  * @param target 触发更新的对象
  * @param key 触发更新的对象的key
  */
@@ -67,7 +67,7 @@ export function trigger(target: ReactiveTarget, key) {
 
   const targetIsArray = Array.isArray(target)
   if (targetIsArray && key === 'length') {
-    // 1.如果修改的是数组的 length 属性，并且修改的是 length 属性
+    // 1.如果修改的是数组，并且修改的是 length 属性
     // 那么需要触发更新所有索引大于等于新 length 的元素对应的依赖
     const length = target.length
     depsMap.forEach((dep, depKey) => {
