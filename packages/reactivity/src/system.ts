@@ -66,11 +66,11 @@ export function link(dep: Dependency, sub: Sub) {
   }
 
   // 新增节点的时候判断链表中是否有相同的 sub ，有的话不新增（源码写法，时间换空间）
-  // let currentSub = dep.subs
-  // while (currentSub) {
-  //   if (currentSub.sub === sub) return
-  //   currentSub = currentSub.nextSub
-  // }
+  let currentSub = dep.subs
+  while (currentSub) {
+    if (currentSub.sub === sub) return
+    currentSub = currentSub.nextSub
+  }
 
   // 新增节点流程
   // 1.构建一个link节点
@@ -148,7 +148,7 @@ export function propagate(subs: Link | undefined) {
     // 如果正在追踪依赖不触发更新，避免循环触发
     if (!sub.tracking && !sub.dirty) {
       // 更新的时候标记为脏值，说明 sub 已经执行，下次不需要再执行
-      // 对应 link 方法里面的判断是否有相同的 sub 逻辑（时间换空间写法）
+      // 对应 link 方法里面的判断是否有相同的 sub 逻辑（空间换时间写法）
       sub.dirty = true
       if ('update' in sub) {
         // 如果有 update 方法，说明是计算属性
